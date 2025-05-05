@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Notes</title>
+    <link rel="stylesheet" href="voice-notes.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Notes</h1>
+        </header>
+        
+        <main>
+            <section class="recording-section">
+                <button id="recordButton" class="record-btn">Start Recording</button>
+                <div id="recordingStatus" class="status">Ready to record</div>
+                <div id="interimTranscript" class="interim-transcript"></div>
+            </section>
+            
+            <section class="note-editor">
+                <div class="editor-controls">
+                    <input type="text" id="noteTitle" placeholder="Note title...">
+                    <button id="saveNote" class="save-btn">Save Note</button>
+                </div>
+                <textarea id="noteContent" placeholder="Your note content will appear here..."></textarea>
+            </section>
+            
+            <section class="notes-list">
+                <h2>Your Notes</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search notes...">
+                </div>
+                <ul id="notesList"></ul>
+            </section>
+        </main>
+    </div>
+    
+    <script src="voice-notes.js"></script>
+</body>
+</html>
