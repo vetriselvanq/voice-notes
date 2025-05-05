@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jump Game with Voice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      overflow: hidden;
+    }
+    .game-container {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      background-color: #87CEEB;
+      border: 2px solid #000;
+      overflow: hidden;
+    }
+    .character {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      background-color: red;
+      border-radius: 50%;
+      transition: bottom 0.3s ease-in-out;
+    }
+    .obstacle {
+      position: absolute;
+      bottom: 0;
+      width: 50px;
+      height: 50px;
+      background-color: green;
+      animation: moveObstacle 2s linear forwards;
+    }
+    @keyframes moveObstacle {
+      0% { left: 100%; }
+      100% { left: -50px; }
+    }
+    .output {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+    }
+    .level {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Jump Game with Voice</h1>
+  <div class="game-container">
+    <div id="character" class="character"></div>
+  </div>
+  <button id="micButton">Allow Microphone</button>
+  <button id="startButton" disabled>Start Game</button>
+  <div class="level" id="level">Level: 1</div>
+  <div class="output" id="output">Click "Allow Microphone" to begin.</div>
+
+  <script>
+    const micButton = document.getElementById('micButton');
+    const startButton = document.getElementById('startButton');
+    const output = document.getElementById('output');
+    const character = document.getElementById('character');
+    const levelDisplay = document.getElementById('level');
+    const jumpVariants = ['jump', 'ju', 'jumping', 'jumper', 'jumpy', 'jup', 'job', 'junk', 'jam', 'chump', 'chimp', 'jug'];
+
+    let recognition;
+    let isMicAllowed = false;
+    let level = 1;
+    let obstacleSpeed = 20;
+    let lastJumpTime = 0;
+
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+    } else {
+      alert("Speech Recognition not supported in this browser.");
+    }
+
+    micButton.onclick = () => {
+      recognition.start();
+      output.textContent = "Requesting microphone access...";
+    };
+
+    recognition.onstart = () => {
+      output.textContent = "Microphone access granted. Click Start Game.";
+      micButton.disabled = true;
+      startButton.disabled = false;
+      isMicAllowed = true;
+    };
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[event.resultIndex][0].transcript.toLowerCase();
+      output.textContent = `You said: ${transcript}`;
+      const now = Date.now();
+      const jumpDetected = jumpVariants.some(word => transcript.includes(word));
+      
+      if (jumpDetected && now - lastJumpTime > 800) {
+        lastJumpTime = now;
+        jumpCharacter();
+      }
+    };
+
+    recognition.onerror = function(event) {
+      console.error('Speech recognition error:', event.error);
+      output.textContent = `Mic error: ${event.error}`;
+      recognition.stop();
+      setTimeout(() => recognition.start(), 1000); // Auto-restart
+    };
+
+    startButton.onclick = () => {
+      if (isMicAllowed) {
+        startButton.disabled = true;
+        output.textContent = "Game Started! Say 'jump'.";
+        spawnObstacle();
+      }
+    };
+
+    function jumpCharacter() {
+      character.style.bottom = '100px';
+      setTimeout(() => {
+        character.style.bottom = '0';
+      }, 500);
+    }
+
+    function spawnObstacle() {
+      const obstacle = document.createElement('div');
+      obstacle.className = 'obstacle';
+      obstacle.style.animationDuration = `${obstacleSpeed}s`;
+      document.querySelector('.game-container').appendChild(obstacle);
+
+      const checkInterval = setInterval(() => {
+        if (isCollision(obstacle)) {
+          output.textContent = "Game Over! You hit an obstacle.";
+          obstacle.remove();
+          clearInterval(checkInterval);
+          restartGame();
+        }
+      }, 10);
+
+      setTimeout(() => {
+        if (document.body.contains(obstacle)) {
+          levelUp();
+          obstacle.remove();
+          spawnObstacle();
+        }
+      }, obstacleSpeed * 1000);
+    }
+
+    function isCollision(obstacle) {
+      const charRect = character.getBoundingClientRect();
+      const obsRect = obstacle.getBoundingClientRect();
+
+      return !(charRect.right < obsRect.left ||
+               charRect.left > obsRect.right ||
+               charRect.bottom < obsRect.top ||
+               charRect.top > obsRect.bottom);
+    }
+
+    function levelUp() {
+      level++;
+      levelDisplay.textContent = `Level: ${level}`;
+      obstacleSpeed = Math.max(1, obstacleSpeed - 0.2);
+    }
+
+    function restartGame() {
+      level = 1;
+      obstacleSpeed = 20;
+      levelDisplay.textContent = `Level: ${level}`;
+      output.textContent = "Restarting game...";
+      setTimeout(() => {
+        startButton.disabled = false;
+        output.textContent = "Click Start Game to try again.";
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
